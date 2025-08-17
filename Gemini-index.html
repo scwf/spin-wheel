@@ -13,26 +13,29 @@
             --turn-duration: 6s; /* 轮盘转动时间 */
             --primary-color: #ff6b6b;
             --secondary-color: #f0f0f0;
-            --text-color: #333;
-            --bg-color: #f8f9fa;
+            --text-color: #e8ecf1;
+            --bg-color: #1d2b3a;
+            --panel-bg: rgba(255, 255, 255, 0.07);
+            --header-color: #ff6b6b;
+            --option-bg: rgba(0, 0, 0, 0.3);
         }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             display: flex;
             justify-content: center;
-            align-items: flex-start; /* 改为 flex-start */
-            /* height: 100vh; */ /* 移除固定高度 */
+            align-items: center;
+            min-height: 100vh;
             margin: 0;
             background-color: var(--bg-color);
-            overflow: auto; /* 改为 auto */
-            padding: 5vh 0; /* 增加垂直内边距 */
+            background-image: linear-gradient(145deg, #1d2b3a 0%, #3d5a80 100%);
         }
 
         .main-container {
             display: flex;
             align-items: center;
             gap: 50px;
+            padding: 40px;
         }
 
         /* --- 抽奖容器 --- */
@@ -54,7 +57,9 @@
             transform-origin: center;
             transform: rotate(0deg);
             will-change: transform;
-            background: conic-gradient(#fff 0deg, #fff 360deg); /* Placeholder */
+            background: conic-gradient(rgba(0,0,0,0.02) 0deg, rgba(0,0,0,0.02) 360deg); /* Placeholder */
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
         }
 
         .labels {
@@ -87,24 +92,25 @@
             position: absolute;
             width: 0;
             height: 0;
-            border-left: 15px solid transparent;
-            border-right: 15px solid transparent;
-            border-bottom: 30px solid var(--primary-color);
-            top: 20px;
-            left: calc(50% - 15px);
+            border-left: 12px solid transparent;
+            border-right: 12px solid transparent;
+            border-bottom: 24px solid var(--header-color);
+            top: -5px;
+            left: calc(50% - 12px);
             z-index: 10;
-            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
+            filter: drop-shadow(0 4px 5px rgba(0,0,0,0.15));
         }
 
         /* --- 中央按钮 --- */
-        .spin-button {
+        .center-hub {
             position: absolute;
-            width: 100px;
-            height: 100px;
+            width: 120px;
+            height: 120px;
             border-radius: 50%;
             background-color: white;
-            border: 5px solid var(--secondary-color);
-            color: var(--primary-color);
+            border: 10px solid white;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1) inset, 0 5px 15px rgba(0,0,0,0.1);
+            color: #333;
             font-size: 24px;
             font-weight: bold;
             cursor: pointer;
@@ -113,49 +119,47 @@
             justify-content: center;
             align-items: center;
             user-select: none;
-            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
             text-align: center;
         }
 
-        .spin-button:hover {
-            transform: scale(1.1);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-        }
-
-        .spin-button:active {
+        .center-hub:hover {
             transform: scale(1.05);
         }
 
-        .spin-button[disabled] {
+        .center-hub[disabled] {
             cursor: not-allowed;
             color: #aaa;
-            transform: scale(1);
-            background-color: #f8f8f8;
         }
 
         /* --- Panel --- */
         .panel {
-            width: 300px;
-            background: white;
+            width: 380px;
+            background: var(--panel-bg);
             border-radius: 15px;
-            padding: 20px;
+            padding: 25px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         .panel h2 {
             text-align: center;
             color: var(--text-color);
-            margin: 0 0 15px 0;
+            margin: 0 0 20px 0;
+            font-size: 22px;
         }
 
         .options-container {
-            /* max-height: 350px; */
-            /* overflow-y: auto; */
+            /* No scroll, full display */
         }
 
         .options-container h3 {
-            color: var(--primary-color);
-            margin: 15px 0 8px;
+            color: var(--header-color);
+            margin: 20px 0 10px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .options-container h3:first-child {
+            margin-top: 0;
         }
 
         .options-container ul {
@@ -168,16 +172,22 @@
         }
 
         .options-container li {
-            background: #f0f0f0;
-            padding: 5px 10px;
-            border-radius: 5px;
+            background: var(--option-bg);
+            padding: 6px 12px;
+            border-radius: 8px;
             font-size: 14px;
+            color: var(--text-color);
         }
 
         @media (max-width: 800px) {
+            body {
+                align-items: flex-start;
+                padding-top: 20px;
+            }
             .main-container {
                 flex-direction: column;
                 gap: 20px;
+                padding: 20px;
             }
         }
     </style>
@@ -186,11 +196,11 @@
 
     <div class="main-container">
         <div class="wheel-container">
-            <div class="wheel" id="wheel">
-                <div class="labels" id="labels"></div>
-            </div>
+            <div class="wheel" id="wheel"></div>
             <div class="pointer"></div>
-            <div class="spin-button" id="spin-btn">开始</div>
+            <div class="center-hub" id="spin-btn">
+                <span id="result-text">开始</span>
+            </div>
         </div>
 
         <aside class="panel">
@@ -213,8 +223,8 @@
 
     // ===================== 初始化 =====================
     const wheel = document.getElementById('wheel');
-    const labels = document.getElementById('labels');
     const btn = document.getElementById('spin-btn');
+    const resultText = document.getElementById('result-text');
 
     const items = OPTIONS.flatMap((cat, catIndex) => 
       cat.options.map(opt => ({ name: opt, category: cat.name, catIndex }))
@@ -228,28 +238,15 @@
         const start = i * slice;
         const end = (i + 1) * slice;
         const hue = Math.round((i / n) * 360);
-        const c1 = `hsla(${hue}, 80%, 55%, 0.2)`;
-        const c2 = `hsla(${(hue + 10) % 360}, 85%, 62%, 0.2)`;
+        const c1 = `hsla(${hue}, 80%, 85%, 1)`;
+        const c2 = `hsla(${(hue + 20) % 360}, 85%, 88%, 1)`;
         stops.push(`${c1} ${start}deg ${end}deg`);
       }
       return stops.join(',');
     }
 
     function renderWheel() {
-      wheel.style.background = `conic-gradient(transparent 0deg, transparent 360deg)`; // Fallback
       wheel.style.background = `conic-gradient(${buildWheelColors(n)})`;
-      
-      labels.innerHTML = '';
-      for (let i = 0; i < n; i++) {
-        const mid = i * slice + slice / 2;
-        const holder = document.createElement('div');
-        holder.className = 'label';
-        holder.style.transform = `rotate(${mid}deg) translate(50%)`;
-        const chip = document.createElement('span');
-        chip.textContent = items[i].name;
-        holder.appendChild(chip);
-        labels.appendChild(holder);
-      }
     }
 
     function renderOptionsList() {
@@ -288,7 +285,7 @@
       if (spinning) return;
       spinning = true;
       btn.disabled = true;
-      btn.textContent = '...';
+      resultText.textContent = '...';
 
       const idx = Math.floor(Math.random() * n);
       const theta = idx * slice + slice / 2;
@@ -311,7 +308,7 @@
             requestAnimationFrame(frame);
           } else {
             currentRotation = endRot;
-            btn.textContent = items[idx].name;
+            resultText.textContent = items[idx].name;
             spinning = false;
             btn.disabled = false;
             resolve();
