@@ -90,6 +90,22 @@
     }
 
     /* 顶部指针 */
+    .current-option {
+      position: absolute;
+      left: 50%;
+      top: -45px;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,.3);
+      color: var(--accent);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: bold;
+      white-space: nowrap;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      opacity: 0;
+      transition: opacity .3s;
+    }
     .pointer {
       position: absolute; left: 50%; top: -12px; transform: translateX(-50%);
       width: 0; height: 0;
@@ -182,6 +198,7 @@
     <section class="grid">
       <div class="stage">
         <div class="wheel-wrap">
+          <div id="current-option" class="current-option"></div>
           <div class="pointer"></div>
           <div id="wheel" class="wheel"></div>
           <div class="labels" id="labels"></div>
@@ -225,6 +242,7 @@
     const labels = document.getElementById('labels');
     const resultEl = document.getElementById('result');
     const btn = document.getElementById('spinBtn');
+    const currentOptionEl = document.getElementById('current-option');
 
     const items = OPTIONS.flatMap((cat, catIndex) =>
       cat.options.map(opt => ({ name: opt, category: cat.name, catIndex }))
@@ -290,6 +308,7 @@
     async function spin() {
       if (spinning) return; // 不限制频率，但避免同一时刻多次触发
       spinning = true; btn.disabled = true;
+      currentOptionEl.style.opacity = '1';
 
       const idx = pickIndexEqually();
       const theta = idx * slice + slice / 2; // 目标扇区中心角度（以 0°=正右，顺时针增加）
@@ -313,12 +332,19 @@
           const eased = easeInOutCubic(t);
           const angle = startRot + (endRot - startRot) * eased;
           wheel.style.transform = `rotate(${angle}deg)`;
+
+          // 实时更新当前选项
+          const currentAngle = normalizeDeg(angle);
+          const activeIndex = Math.floor(normalizeDeg(currentAngle - 90 + slice/2) / slice);
+          currentOptionEl.textContent = items[n - 1 - activeIndex].name;
+
           if (t < 1) {
             requestAnimationFrame(frame);
           } else {
             currentRotation = endRot; // 保留累积角度，下一次接着旋
             // 直接在中心显示结果（无需弹窗）
             resultEl.textContent = items[idx].name;
+            currentOptionEl.textContent = items[idx].name; // 确保最终显示正确结果
             spinning = false; btn.disabled = false;
             resolve();
           }
