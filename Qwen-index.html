@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>L4产品云服务轮盘转</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            /* min-height: 100vh; */ /* 移除固定高度 */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            color: white;
+            overflow: auto; /* 允许滚动 */
+        }
+        
+        .container {
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin: 20px 0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .wheel-container {
+            position: relative;
+            width: 400px;
+            height: 400px;
+            margin: 30px auto;
+        }
+        
+        .wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+            background: #2c3e50;
+            transform: rotate(0deg);
+            will-change: transform;
+        }
+        
+        .wheel-pointer {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 50px;
+            background: #e74c3c;
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+            z-index: 10;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+        }
+        
+        .option {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            transform-origin: bottom right;
+            left: 0;
+            top: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        .option-content {
+            transform: rotate(45deg);
+            width: 120px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+            padding: 10px;
+            margin-top: 30px;
+            margin-right: -30px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        
+        .center-circle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80px;
+            height: 80px;
+            background: #ecf0f1;
+            border-radius: 50%;
+            z-index: 5;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        
+        .controls {
+            margin: 30px 0;
+        }
+        
+        .spin-btn {
+            background: linear-gradient(to right, #ff416c, #ff4b2b);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .spin-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+        }
+        
+        .spin-btn:active {
+            transform: translateY(1px);
+        }
+        
+        .spin-btn:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .config-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+            width: 100%;
+        }
+
+        .options-container {
+            /* max-height: 250px; */
+            /* overflow-y: auto; */
+        }
+        
+        .options-container h3 {
+            margin: 10px 0 5px;
+            font-size: 1.2rem;
+            color: #ffca2b;
+            text-align: left;
+        }
+
+        .options-container ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 8px;
+            text-align: left;
+        }
+
+        .options-container li {
+            background: rgba(0,0,0,0.3);
+            padding: 8px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+        
+        h2 {
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+        
+        .options-input {
+            width: 100%;
+            min-height: 100px;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid rgba(255,255,255,0.3);
+            background: rgba(0,0,0,0.2);
+            color: white;
+            font-size: 1rem;
+            margin-bottom: 15px;
+        }
+        
+        .options-input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        
+        .apply-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        
+        .result {
+            font-size: 1.8rem;
+            font-weight: bold;
+            height: 50px;
+            margin: 20px 0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .instructions {
+            background: rgba(0,0,0,0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 500px) {
+            .wheel-container {
+                width: 300px;
+                height: 300px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎡 L4产品云服务轮盘转 🎡</h1>
+        
+        <div class="wheel-container">
+            <div class="wheel-pointer"></div>
+            <div class="wheel" id="wheel">
+                <!-- 轮盘选项将通过JavaScript动态生成 -->
+            </div>
+            <div class="center-circle" id="result">—</div>
+        </div>
+        
+        <div class="controls">
+            <button class="spin-btn" id="spinBtn">开始抽取</button>
+        </div>
+        
+        <div class="config-section">
+            <h2>⚙️ 云服务列表（L4）</h2>
+            <div id="options-list" class="options-container"></div>
+        </div>
+    </div>
+
+    <script>
+    // ===================== 配置 =====================
+    const OPTIONS = [
+      { name: 'A类', options: ['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'A9'] },
+      { name: 'B类', options: ['B1', 'B2'] },
+      { name: 'C类', options: ['C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9', 'C10', 'C11', 'C12', 'C13', 'C14', 'C15', 'C16', 'C17', 'C18', 'C19'] },
+    ];
+    const MIN_SPINS = 5;
+    const MAX_SPINS = 8;
+    const MIN_DURATION = 3800;
+    const MAX_DURATION = 6200;
+
+    // ===================== 初始化 =====================
+    const wheel = document.getElementById('wheel');
+    const resultEl = document.getElementById('result');
+    const btn = document.getElementById('spinBtn');
+    const centerCircle = document.querySelector('.center-circle');
+
+    const items = OPTIONS.flatMap((cat, catIndex) => 
+      cat.options.map(opt => ({ name: opt, category: cat.name, catIndex }))
+    );
+    const n = items.length;
+    const slice = 360 / n;
+
+    function buildWheelColors(n) {
+      const stops = [];
+      const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFBE0B', '#FB5607', '#8338EC', '#3A86FF'];
+      for (let i = 0; i < n; i++) {
+        const start = i * slice;
+        const end = (i + 1) * slice;
+        stops.push(`${colors[i % colors.length]} ${start}deg ${end}deg`);
+      }
+      return stops.join(',');
+    }
+
+    function renderWheel() {
+      wheel.style.background = `conic-gradient(${buildWheelColors(n)})`;
+    }
+
+    function renderOptionsList() {
+      const listEl = document.getElementById('options-list');
+      listEl.innerHTML = '';
+      OPTIONS.forEach(cat => {
+        const catHeader = document.createElement('h3');
+        catHeader.textContent = `${cat.name} (${cat.options.length})`;
+        listEl.appendChild(catHeader);
+        const ul = document.createElement('ul');
+        cat.options.forEach(item => {
+          const li = document.createElement('li');
+          li.textContent = item;
+          ul.appendChild(li);
+        });
+        listEl.appendChild(ul);
+      });
+    }
+
+    renderWheel();
+    renderOptionsList();
+
+    // ===================== 动画 =====================
+    let currentRotation = 0;
+    let spinning = false;
+
+    function easeInOutCubic(t) {
+      return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    }
+
+    function normalizeDeg(deg) { return ((deg % 360) + 360) % 360; }
+
+    function randomInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+    async function spin() {
+      if (spinning) return;
+      spinning = true;
+      btn.disabled = true;
+
+      const idx = Math.floor(Math.random() * n);
+      const theta = idx * slice + slice / 2;
+      const baseDelta = normalizeDeg(270 - theta - normalizeDeg(currentRotation));
+      const spins = randomInt(MIN_SPINS, MAX_SPINS);
+      const delta = baseDelta + spins * 360;
+      const duration = randomInt(MIN_DURATION, MAX_DURATION);
+
+      const start = performance.now();
+      const startRot = currentRotation;
+      const endRot = currentRotation + delta;
+
+      return new Promise((resolve) => {
+        function frame(now) {
+          const t = Math.min(1, (now - start) / duration);
+          const eased = easeInOutCubic(t);
+          const angle = startRot + (endRot - startRot) * eased;
+          wheel.style.transform = `rotate(${angle}deg)`;
+          if (t < 1) {
+            requestAnimationFrame(frame);
+          } else {
+            currentRotation = endRot;
+            resultEl.textContent = items[idx].name;
+            spinning = false;
+            btn.disabled = false;
+            resolve();
+          }
+        }
+        requestAnimationFrame(frame);
+      });
+    }
+
+    btn.addEventListener('click', spin);
+    centerCircle.addEventListener('click', spin);
+    
+    resultEl.textContent = '开始';
+    </script>
+</body>
+</html>

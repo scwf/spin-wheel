@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>L4产品云服务轮盘转</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --card: rgba(255,255,255,0.06);
+      --card-2: rgba(255,255,255,0.08);
+      --text: #e8ecf1;
+      --muted: #a9b3c7;
+      --accent: #7aa2ff;
+      --ring: rgba(122,162,255,0.35);
+      --shadow: 0 10px 30px rgba(0,0,0,.35), 0 1px 0 rgba(255,255,255,.05) inset;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      background:
+        radial-gradient(1200px 600px at 10% 10%, rgba(118,167,255,.08), transparent 60%),
+        radial-gradient(900px 500px at 90% 80%, rgba(140,255,196,.08), transparent 60%),
+        var(--bg);
+      color: var(--text);
+      display: grid; place-items: center;
+      padding: 24px;
+    }
+    .app {
+      width: min(1040px, 96vw);
+      background: linear-gradient(180deg, var(--card), var(--card-2));
+      border: 1px solid rgba(255,255,255,.08);
+      box-shadow: var(--shadow);
+      border-radius: 24px;
+      padding: 24px; position: relative; overflow: hidden;
+      backdrop-filter: blur(6px) saturate(120%);
+    }
+    .app::before {
+      content: "";
+      position: absolute; inset: -40% -10% auto -10%; height: 70%;
+      background: conic-gradient(from 0deg, #7aa2ff22, #7affcf22, #e2a8ff22, #7aa2ff22);
+      filter: blur(40px); opacity: .85;
+      pointer-events: none;
+    }
+    header { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 18px var(--accent); }
+    h1 { font-size: clamp(18px, 2.4vw, 28px); margin: 0; letter-spacing: .4px; }
+    p.desc { margin: 4px 0 0 24px; color: var(--muted); font-size: 13px; }
+
+    .grid { display: grid; grid-template-columns: 1fr 320px; gap: 24px; }
+    @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
+
+    .stage { display: grid; place-items: center; padding: 12px; }
+
+    .wheel-wrap { position: relative; width: min(74vmin, 560px); aspect-ratio: 1; }
+
+    /* 轮盘主体 */
+    .wheel {
+      position: absolute; inset: 0; margin: auto;
+      border-radius: 50%;
+      background: conic-gradient(#333 0deg, #333 360deg);
+      box-shadow: inset 0 0 0 10px rgba(255,255,255,.06), inset 0 0 30px rgba(0,0,0,.45), 0 30px 80px rgba(0,0,0,.35);
+      border: 1px solid rgba(255,255,255,.14);
+      transform: rotate(0deg);
+      will-change: transform;
+    }
+    /* 细分刻度，增加科技感 */
+    .wheel::after {
+      content: ""; position: absolute; inset: 0; border-radius: 50%;
+      background:
+        radial-gradient(closest-side, transparent calc(100% - 46px), rgba(255,255,255,.12) calc(100% - 45px), transparent calc(100% - 44px)),
+        repeating-conic-gradient(from 0deg, rgba(0,0,0,.15) 0deg 1deg, transparent 1deg 6deg);
+      mix-blend-mode: overlay; pointer-events: none;
+    }
+    .hub {
+      position: absolute; inset: 0; margin: auto; width: 34%; aspect-ratio: 1; border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.18), rgba(255,255,255,.06) 38%, rgba(255,255,255,.02) 60%, transparent 65%),
+                  linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.06));
+      border: 1px solid rgba(255,255,255,.18);
+      display: grid; place-items: center;
+      box-shadow: inset 0 2px 16px rgba(0,0,0,.35), 0 10px 30px rgba(0,0,0,.25);
+      cursor: pointer;
+    }
+    .result {
+      font-weight: 700; text-align: center; padding: 10px 12px; width: 92%;
+      white-space: nowrap; text-overflow: ellipsis; overflow: hidden;
+      color: #f3f7ff; text-shadow: 0 2px 12px rgba(0,0,0,.6);
+      font-size: 25px;
+    }
+
+    /* 顶部指针 */
+    .pointer {
+      position: absolute; left: 50%; top: -12px; transform: translateX(-50%);
+      width: 0; height: 0;
+      border-left: 14px solid transparent; border-right: 14px solid transparent; border-bottom: 18px solid #fff;
+      filter: drop-shadow(0 6px 8px rgba(0,0,0,.35));
+    }
+    .pointer::after{
+      content:""; position: absolute; left: -7px; top: 12px; width: 14px; height: 14px; border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #fff, #dbe6ff);
+      box-shadow: 0 0 0 4px var(--ring), 0 6px 16px rgba(0,0,0,.35);
+    }
+
+    /* 文本标签沿环排布并保持正向 */
+    /*
+    .labels { position: absolute; inset: 0; border-radius: 50%; }
+    .label { position: absolute; left: 50%; top: 50%; transform-origin: 0% 0%;
+      color: #0b1020; font-weight: 700; letter-spacing: .2px;
+      text-shadow: 0 1px 0 rgba(255,255,255,.4);
+    }
+    .label > span { display: inline-block; padding: 6px 10px; border-radius: 999px;
+      background: rgba(255,255,255,.88); box-shadow: 0 4px 10px rgba(0,0,0,.2);
+      max-width: min(34vw, 220px); white-space: nowrap; text-overflow: ellipsis; overflow: hidden;
+    }
+    */
+
+    /* 控制面板 */
+    .panel {
+      background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12);
+      border-radius: 16px; padding: 16px; box-shadow: var(--shadow);
+      display: grid; gap: 12px; align-content: start;
+    }
+    .panel h2 { margin: 0 0 8px; font-size: 16px; color: var(--text); letter-spacing: .3px; }
+    .panel h3 {
+      margin: 12px 0 6px;
+      font-size: 14px;
+      color: var(--accent);
+      border-bottom: 1px solid var(--accent);
+      padding-bottom: 4px;
+    }
+    .panel h3:first-child {
+      margin-top: 0;
+    }
+    .panel .hint { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+    .btn {
+      -webkit-tap-highlight-color: transparent;
+      appearance: none; border: 0; cursor: pointer;
+      padding: 12px 16px; border-radius: 14px; font-weight: 700; font-size: 15px; letter-spacing: .3px;
+      color: #0b1020; background: linear-gradient(135deg, #a0b9ff, #7affcf);
+      box-shadow: 0 8px 20px rgba(122,162,255,.35), inset 0 1px 0 rgba(255,255,255,.6);
+      transition: transform .08s ease;
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn[disabled] { filter: grayscale(1) contrast(.8); opacity: .6; cursor: not-allowed; }
+
+    .config {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      background: rgba(0,0,0,.35); color: #d6e1ff; font-size: 12px; padding: 12px; border-radius: 10px;
+      border: 1px dashed rgba(255,255,255,.15);
+    }
+    .config ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .config li {
+      background: rgba(0,0,0,.2);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 13px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    code.k { color: #a1ffca; }
+    code.v { color: #ffd699; }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div class="dot"></div>
+      <h1>L4产品云服务轮盘转</h1>
+    </header>
+    <p class="desc">点击 <strong>开始抽取</strong>，选择本次中奖的云服务，进行产品竞争力和GoLive分享</p>
+
+    <section class="grid">
+      <div class="stage">
+        <div class="wheel-wrap">
+          <div class="pointer"></div>
+          <div id="wheel" class="wheel"></div>
+          <div class="labels" id="labels"></div>
+          <div class="hub"><div id="result" class="result">—</div></div>
+        </div>
+      </div>
+
+      <aside class="panel">
+        <h2>控制</h2>
+        <button id="spinBtn" class="btn">开始抽取</button>
+        <h2>云服务列表（L4）</h2>
+        <div id="options-list" class="config">
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    // ===================== 配置 =====================
+    // 通过代码自定义选项：将此数组替换为你的内容
+    // 等概率：从此数组中均匀随机抽取
+    const OPTIONS = [
+      { name: 'A类', options: ['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'A9'] },
+      { name: 'B类', options: ['B1', 'B2'] },
+      { name: 'C类', options: ['C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9', 'C10', 'C11', 'C12', 'C13', 'C14', 'C15', 'C16', 'C17', 'C18', 'C19'] },
+    ];
+
+    // 如果你希望保留默认配置作为兜底，可以将 OPTIONS = null，并使用 DEFAULT_OPTIONS
+    const DEFAULT_OPTIONS = [
+      "选项 A", "选项 B", "选项 C", "选项 D", "选项 E", "选项 F", "选项 G", "选项 H"
+    ];
+
+    // 视觉参数
+    const MIN_SPINS = 5;       // 最少整圈数
+    const MAX_SPINS = 8;       // 最多整圈数
+    const MIN_DURATION = 3800; // ms 最短动画时长
+    const MAX_DURATION = 6200; // ms 最长动画时长
+
+    // ===================== 初始化 =====================
+    const wheel = document.getElementById('wheel');
+    const labels = document.getElementById('labels');
+    const resultEl = document.getElementById('result');
+    const btn = document.getElementById('spinBtn');
+
+    const items = OPTIONS.flatMap((cat, catIndex) =>
+      cat.options.map(opt => ({ name: opt, category: cat.name, catIndex }))
+    );
+
+    const n = items.length;
+    const slice = 360 / n;
+
+    // 生成色带：等距 HSL，使用 conic-gradient 渲染
+    function buildWheelColors(n) {
+      const stops = [];
+      for (let i = 0; i < n; i++) {
+        const start = i * slice;
+        const end = (i + 1) * slice;
+        const hue = Math.round((i / n) * 360);
+        // 使用两段色过渡，增加质感
+        const c1 = `hsl(${hue} 80% 55%)`;
+        const c2 = `hsl(${(hue + 10) % 360} 85% 62%)`;
+        stops.push(`${c1} ${start}deg ${(start + end) / 2}deg`, `${c2} ${(start + end) / 2}deg ${end}deg`);
+      }
+      return stops.join(',');
+    }
+
+    function renderWheel() {
+      wheel.style.background = `conic-gradient(${buildWheelColors(n)})`;
+    }
+
+    renderWheel();
+    renderOptionsList();
+
+    function renderOptionsList() {
+      const listEl = document.getElementById('options-list');
+      listEl.innerHTML = ''; // 清空
+      OPTIONS.forEach(cat => {
+        const catHeader = document.createElement('h3');
+        catHeader.textContent = `${cat.name} (${cat.options.length})`;
+        listEl.appendChild(catHeader);
+        const ul = document.createElement('ul');
+        cat.options.forEach(item => {
+          const li = document.createElement('li');
+          li.textContent = item;
+          ul.appendChild(li);
+        });
+        listEl.appendChild(ul);
+      });
+    }
+
+    // ===================== 动画（加速→减速） =====================
+    let currentRotation = 0; // 累积角度（度）
+    let spinning = false;
+
+    // Easing：easeInOutCubic，体现加速→减速
+    function easeInOutCubic(t) {
+      return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    }
+
+    function normalizeDeg(deg) { return ((deg % 360) + 360) % 360; }
+
+    function randomInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+    function pickIndexEqually() { return Math.floor(Math.random() * n); }
+
+    async function spin() {
+      if (spinning) return; // 不限制频率，但避免同一时刻多次触发
+      spinning = true; btn.disabled = true;
+
+      const idx = pickIndexEqually();
+      const theta = idx * slice + slice / 2; // 目标扇区中心角度（以 0°=正右，顺时针增加）
+
+      // 使扇区中心落在顶部指针（顶部对应 90°）。
+      // 求解目标总旋转角：R ≡ 90° - theta (mod 360°)
+      const baseDelta = normalizeDeg(90 - theta - normalizeDeg(currentRotation));
+      const spins = randomInt(MIN_SPINS, MAX_SPINS);
+      const delta = baseDelta + spins * 360; // 增加整圈数以形成观感
+
+      const duration = randomInt(MIN_DURATION, MAX_DURATION); // 动画时长
+
+      const start = performance.now();
+      const startRot = currentRotation;
+      const endRot = currentRotation + delta;
+
+      // 动画主循环
+      return new Promise((resolve) => {
+        function frame(now) {
+          const t = Math.min(1, (now - start) / duration);
+          const eased = easeInOutCubic(t);
+          const angle = startRot + (endRot - startRot) * eased;
+          wheel.style.transform = `rotate(${angle}deg)`;
+          if (t < 1) {
+            requestAnimationFrame(frame);
+          } else {
+            currentRotation = endRot; // 保留累积角度，下一次接着旋
+            // 直接在中心显示结果（无需弹窗）
+            resultEl.textContent = items[idx].name;
+            spinning = false; btn.disabled = false;
+            resolve();
+          }
+        }
+        requestAnimationFrame(frame);
+      });
+    }
+
+    btn.addEventListener('click', spin);
+    document.querySelector('.hub').addEventListener('click', spin);
+
+    // 初始结果占位
+    resultEl.textContent = '开始抽取';
+  </script>
+</body>
+</html>

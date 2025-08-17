@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>L4产品云服务轮盘转</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* 改为 flex-start */
+            overflow: auto; /* 改为 auto */
+            padding: 20px 0; /* 增加上下内边距 */
+        }
+
+        .container {
+            text-align: center;
+            position: relative;
+            padding: 20px;
+            margin-top: 5vh; /* 增加上边距 */
+        }
+
+        .main-content {
+            display: flex;
+            align-items: center;
+            gap: 40px;
+        }
+
+        .wheel-container {
+            position: relative;
+            width: 400px;
+            height: 400px;
+        }
+
+        .wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            transform: rotate(0deg);
+            will-change: transform;
+            background: conic-gradient(#fff 0deg, #fff 360deg); /* Placeholder */
+        }
+
+        .segment {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            transform-origin: 100% 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            cursor: pointer;
+        }
+
+        .pointer {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-bottom: 30px solid #ff4757;
+            z-index: 10;
+            filter: drop-shadow(0 4px 5px rgba(0,0,0,0.3));
+        }
+
+        .center-circle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            z-index: 5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            cursor: pointer;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .panel {
+            width: 300px;
+        }
+
+        .spin-button {
+            background: linear-gradient(45deg, #ff4757, #ff3742);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 71, 87, 0.4);
+            margin-bottom: 20px;
+        }
+
+        .spin-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 71, 87, 0.6);
+        }
+
+        .spin-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .options-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            /* max-height: 300px; */
+            /* overflow-y: auto; */
+        }
+
+        .options-container h3 {
+            color: white;
+            margin: 10px 0 5px;
+            font-size: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.3);
+            padding-bottom: 5px;
+        }
+        .options-container h3:first-child {
+            margin-top: 0;
+        }
+
+        .options-container ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 5px;
+        }
+
+        .options-container li {
+            background: rgba(0,0,0,0.2);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .title {
+            color: white;
+            font-size: 32px;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        @media (max-width: 800px) {
+            .main-content {
+                flex-direction: column;
+            }
+            .panel {
+                width: 100%;
+                max-width: 400px;
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: translate(-50%, -50%) scale(1);
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.1);
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        .spinning .center-circle {
+            animation: pulse 0.5s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">L4产品云服务轮盘转</h1>
+        <div class="main-content">
+            <div class="wheel-container">
+                <div class="wheel" id="wheel"></div>
+                <div class="pointer"></div>
+                <div class="center-circle" id="result">—</div>
+            </div>
+            <div class="panel">
+                <button class="spin-button" id="spinBtn">开始抽取</button>
+                <div id="options-list" class="options-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // ===================== 配置 =====================
+    const OPTIONS = [
+      { name: 'A类', options: ['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'A9'] },
+      { name: 'B类', options: ['B1', 'B2'] },
+      { name: 'C类', options: ['C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9', 'C10', 'C11', 'C12', 'C13', 'C14', 'C15', 'C16', 'C17', 'C18', 'C19'] },
+    ];
+    const MIN_SPINS = 5;
+    const MAX_SPINS = 8;
+    const MIN_DURATION = 3800;
+    const MAX_DURATION = 6200;
+
+    // ===================== 初始化 =====================
+    const wheel = document.getElementById('wheel');
+    const resultEl = document.getElementById('result');
+    const btn = document.getElementById('spinBtn');
+    const centerCircle = document.querySelector('.center-circle');
+
+    const items = OPTIONS.flatMap((cat, catIndex) => 
+      cat.options.map(opt => ({ name: opt, category: cat.name, catIndex }))
+    );
+    const n = items.length;
+    const slice = 360 / n;
+
+    function buildWheelColors(n) {
+      const stops = [];
+      for (let i = 0; i < n; i++) {
+        const start = i * slice;
+        const end = (i + 1) * slice;
+        const hue = Math.round((i / n) * 360);
+        const c1 = `hsl(${hue}, 80%, 55%)`;
+        const c2 = `hsl(${(hue + 10) % 360}, 85%, 62%)`;
+        stops.push(`${c1} ${start}deg ${(start + end) / 2}deg`, `${c2} ${(start + end) / 2}deg ${end}deg`);
+      }
+      return stops.join(',');
+    }
+
+    function renderWheel() {
+      wheel.style.background = `conic-gradient(${buildWheelColors(n)})`;
+    }
+
+    function renderOptionsList() {
+      const listEl = document.getElementById('options-list');
+      listEl.innerHTML = '';
+      OPTIONS.forEach(cat => {
+        const catHeader = document.createElement('h3');
+        catHeader.textContent = `${cat.name} (${cat.options.length})`;
+        listEl.appendChild(catHeader);
+        const ul = document.createElement('ul');
+        cat.options.forEach(item => {
+          const li = document.createElement('li');
+          li.textContent = item;
+          ul.appendChild(li);
+        });
+        listEl.appendChild(ul);
+      });
+    }
+
+    renderWheel();
+    renderOptionsList();
+
+    // ===================== 动画 =====================
+    let currentRotation = 0;
+    let spinning = false;
+
+    function easeInOutCubic(t) {
+      return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    }
+
+    function normalizeDeg(deg) { return ((deg % 360) + 360) % 360; }
+
+    function randomInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+    async function spin() {
+      if (spinning) return;
+      spinning = true;
+      btn.disabled = true;
+
+      const idx = Math.floor(Math.random() * n);
+      const theta = idx * slice + slice / 2;
+      const baseDelta = normalizeDeg(270 - theta - normalizeDeg(currentRotation));
+      const spins = randomInt(MIN_SPINS, MAX_SPINS);
+      const delta = baseDelta + spins * 360;
+      const duration = randomInt(MIN_DURATION, MAX_DURATION);
+
+      const start = performance.now();
+      const startRot = currentRotation;
+      const endRot = currentRotation + delta;
+
+      return new Promise((resolve) => {
+        function frame(now) {
+          const t = Math.min(1, (now - start) / duration);
+          const eased = easeInOutCubic(t);
+          const angle = startRot + (endRot - startRot) * eased;
+          wheel.style.transform = `rotate(${angle}deg)`;
+          if (t < 1) {
+            requestAnimationFrame(frame);
+          } else {
+            currentRotation = endRot;
+            resultEl.textContent = items[idx].name;
+            spinning = false;
+            btn.disabled = false;
+            resolve();
+          }
+        }
+        requestAnimationFrame(frame);
+      });
+    }
+
+    btn.addEventListener('click', spin);
+    centerCircle.addEventListener('click', spin);
+    
+    resultEl.textContent = '开始';
+    </script>
+</body>
+</html>
